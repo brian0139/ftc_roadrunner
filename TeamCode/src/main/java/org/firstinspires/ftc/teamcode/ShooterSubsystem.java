@@ -35,36 +35,35 @@ public class ShooterSubsystem {
         this.feeding = feeding;
     }
 
-    public void update(Gamepad gamepad, Telemetry telemetry) {
-        // Left bumper toggles the shooter
-        if (gamepad.left_bumper && !lastLB) shooterOn = !shooterOn;
-        lastLB = gamepad.left_bumper;
+    // driver = gamepad1 (intake only), operator = gamepad2 (shooter + intake)
+    public void update(Gamepad driver, Gamepad operator, Telemetry telemetry) {
+        // ---- Shooter: operator only ----
+        if (operator.left_bumper && !lastLB) shooterOn = !shooterOn;
+        lastLB = operator.left_bumper;
 
-        // Right bumper toggles the intake
-        if (gamepad.right_bumper && !lastRB) intakeOn = !intakeOn;
-        lastRB = gamepad.right_bumper;
+        if (operator.dpad_up && !lastUp) shooterPower += STEP;
+        if (operator.dpad_down && !lastDown) shooterPower -= STEP;
+        lastUp = operator.dpad_up;
+        lastDown = operator.dpad_down;
 
-        // X (square) held = outtake (intake in reverse)
-        boolean outtake = gamepad.x;
+        // ---- Intake: either controller ----
+        boolean rb = driver.right_bumper || operator.right_bumper;
+        if (rb && !lastRB) intakeOn = !intakeOn;
+        lastRB = rb;
 
-        // Shooter speed: dpad up/down
-        if (gamepad.dpad_up && !lastUp) shooterPower += STEP;
-        if (gamepad.dpad_down && !lastDown) shooterPower -= STEP;
-        lastUp = gamepad.dpad_up;
-        lastDown = gamepad.dpad_down;
+        boolean outtake = driver.x || operator.x;   // held = reverse
 
-        // Intake speed: dpad right/left
-        if (gamepad.dpad_right && !lastRight) intakePower += STEP;
-        if (gamepad.dpad_left && !lastLeft) intakePower -= STEP;
-        lastRight = gamepad.dpad_right;
-        lastLeft = gamepad.dpad_left;
+        boolean right = driver.dpad_right || operator.dpad_right;
+        boolean left = driver.dpad_left || operator.dpad_left;
+        if (right && !lastRight) intakePower += STEP;
+        if (left && !lastLeft) intakePower -= STEP;
+        lastRight = right;
+        lastLeft = left;
 
         shooterPower = Math.max(0, Math.min(1, shooterPower));
         intakePower = Math.max(0, Math.min(1, intakePower));
 
-        // Outtake overrides the intake while held, then the intake resumes if it was on
-        double intakeOut = outtake ? -intakePower : (intakeOn ? intakePower : 0.0);
-        intake.setPower(intakeOut);
+        intake.setPower(outtake ? -intakePower : (intakeOn ? intakePower : 0.0));
 
         double scale = feeding ? 1.0 : IDLE_SCALE;
         double compensated = shooterPower * scale * REF_VOLTAGE / battery.getVoltage();

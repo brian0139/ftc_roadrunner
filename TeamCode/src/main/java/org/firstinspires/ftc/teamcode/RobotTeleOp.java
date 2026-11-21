@@ -10,8 +10,6 @@ public class RobotTeleOp extends LinearOpMode {
     private final TurretSubsystem turret = new TurretSubsystem();
     private final ShooterStopperSubsystem stopper = new ShooterStopperSubsystem();
 
-
-
     @Override
     public void runOpMode() {
         drive.init(hardwareMap);
@@ -19,27 +17,28 @@ public class RobotTeleOp extends LinearOpMode {
         turret.init(hardwareMap);
         stopper.init(hardwareMap);
 
-        telemetry.addLine("Robot Ready.");
-        telemetry.update();
+        // Alliance select during init (gamepad2): B = red, X = blue
         boolean blue = false;
         while (!isStarted() && !isStopRequested()) {
-            if (gamepad1.b) blue = false;   // red
-            if (gamepad1.x) blue = true;    // blue
+            if (gamepad2.b) blue = false;
+            if (gamepad2.x) blue = true;
             telemetry.addData("Alliance", blue ? "BLUE" : "RED");
-            telemetry.addLine("B = red, X = blue");
+            telemetry.addLine("Gamepad2: B = red, X = blue");
             telemetry.update();
         }
         turret.setAlliance(blue);
+
         while (opModeIsActive()) {
-            drive.update(gamepad1, telemetry);
+            drive.update(gamepad1, telemetry);          // gamepad1: driving
+            stopper.update(gamepad2, telemetry);        // gamepad2: stopper
             shooter.setFeeding(stopper.isOpen());
-            shooter.update(gamepad1, telemetry);
-            turret.update(gamepad1, telemetry);
-            stopper.update(gamepad1, telemetry);
+            shooter.update(gamepad1, gamepad2, telemetry); // intake: both, shooter: gamepad2
+            turret.update(gamepad2, telemetry);         // gamepad2: turret
             telemetry.update();
         }
 
         drive.stop();
         shooter.stop();
+        turret.stop();
     }
 }
