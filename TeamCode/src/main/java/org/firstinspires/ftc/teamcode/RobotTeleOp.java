@@ -9,6 +9,7 @@ public class RobotTeleOp extends LinearOpMode {
     private final ShooterSubsystem shooter = new ShooterSubsystem();
     private final TurretSubsystem turret = new TurretSubsystem();
     private final ShooterStopperSubsystem stopper = new ShooterStopperSubsystem();
+    private final HoodSubsystem hood = new HoodSubsystem();
 
     @Override
     public void runOpMode() {
@@ -16,6 +17,8 @@ public class RobotTeleOp extends LinearOpMode {
         shooter.init(hardwareMap);
         turret.init(hardwareMap);
         stopper.init(hardwareMap);
+        hood.init(hardwareMap);
+
 
         // Alliance select during init (gamepad2): B = red, X = blue
         boolean blue = false;
@@ -33,7 +36,8 @@ public class RobotTeleOp extends LinearOpMode {
             stopper.update(gamepad2, telemetry);        // gamepad2: stopper
             shooter.setFeeding(stopper.isOpen());
             shooter.update(gamepad1, gamepad2, telemetry); // intake: both, shooter: gamepad2
-            turret.update(gamepad2, telemetry);         // gamepad2: turret
+            turret.update(gamepad2, telemetry);
+            hood.update(gamepad2, telemetry);  // gamepad2: turret
             telemetry.update();
         }
 
