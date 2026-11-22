@@ -15,14 +15,14 @@ public class TurretSubsystem {
     private final ElapsedTime timer = new ElapsedTime();
 
     // ---- Servo / manual tunables ----
-    private static final double START_POS = 0.1;   // turret forward
-    private static final double MIN_POS = 0.02;
+    private static final double START_POS = 0.5;   // turret forward
+    private static final double MIN_POS = 0.1;
     private static final double MAX_POS = 0.9;
     private static final double SPEED = 0.5;       // manual: position units/sec at full trigger
     private static final double DEADZONE = 0.05;
     private static final double TURN_SIGN = 1;     // flip to -1 if right trigger turns it left
     private static final Servo.Direction DIR_L = Servo.Direction.FORWARD;
-    private static final Servo.Direction DIR_R = Servo.Direction.REVERSE;
+    private static final Servo.Direction DIR_R = Servo.Direction.FORWARD;
 
     // ---- Auto-aim tunables ----
     // Index 0 = audience side, index 1 = side opposite the audience

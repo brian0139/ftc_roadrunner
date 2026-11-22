@@ -11,8 +11,8 @@ public class ShooterStopperSubsystem {
     private boolean lastB = false;
 
     // Tunables: find these by testing
-    private static final double CLOSED_POS = 0.15;  // blocks balls before the flywheel
-    private static final double OPEN_POS = 0.3;    // lets balls through
+    private static final double CLOSED_POS = 0.5;  // blocks balls before the flywheel
+    private static final double OPEN_POS = 0.67;    // lets balls through
 
     public void init(HardwareMap hw) {
         stopper = hw.get(Servo.class, "stopper");

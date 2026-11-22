@@ -12,7 +12,6 @@ public class RobotTeleOp extends LinearOpMode {
     private final HoodSubsystem hood = new HoodSubsystem();
     private final FlowerIntakeSubsystem flower = new FlowerIntakeSubsystem();
 
-
     @Override
     public void runOpMode() {
         drive.init(hardwareMap);
@@ -21,7 +20,6 @@ public class RobotTeleOp extends LinearOpMode {
         stopper.init(hardwareMap);
         hood.init(hardwareMap);
         flower.init(hardwareMap);
-
 
         // Alliance select during init (gamepad2): B = red, X = blue
         boolean blue = false;
@@ -35,20 +33,21 @@ public class RobotTeleOp extends LinearOpMode {
         turret.setAlliance(blue);
 
         while (opModeIsActive()) {
-            drive.update(gamepad1, telemetry);          // gamepad1: driving
-            stopper.update(gamepad2, telemetry);        // gamepad2: stopper
+            drive.update(gamepad1, telemetry);              // gamepad1: driving
+            stopper.update(gamepad2, telemetry);            // gamepad2: stopper
             shooter.setFeeding(stopper.isOpen());
-            shooter.update(gamepad1, gamepad2, telemetry); // intake: both, shooter: gamepad2
-            turret.update(gamepad2, telemetry);
-            hood.update(gamepad2, telemetry);
-            flower.update(gamepad2, telemetry);
-// gamepad2: turret
+            shooter.update(gamepad1, gamepad2, telemetry);  // intake: both, shooter: gamepad2
+            turret.update(gamepad2, telemetry);             // gamepad2: turret
+            hood.update(gamepad2, telemetry);               // gamepad2: hood
+            flower.update(gamepad1, telemetry);             // gamepad1: flower
             telemetry.update();
         }
 
         drive.stop();
         shooter.stop();
         turret.stop();
+        stopper.stop();
+        hood.stop();
         flower.stop();
     }
 }

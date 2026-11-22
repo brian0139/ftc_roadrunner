@@ -1,71 +1,71 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class FlowerIntakeSubsystem {
-    private CRServo flowerL, flowerR;
-    private AnalogInput position;   // analog feedback wire from one of the Axons
+    private Servo flower;
+    private final ElapsedTime timer = new ElapsedTime();
 
     // ---- Tunables ----
-    private static final double DEFAULT_STOP_VOLTAGE = 2.0;  // stop point at every init (0 to 3.3 V)
-    private static final double VOLTAGE_STEP = 0.05;         // change per button press
-    private static final boolean VOLTAGE_RISES_GOING_UP = true; // flip if voltage drops when it moves up
-    private static final double MAX_POWER = 0.6;
-    private static final double DEADZONE = 0.05;
-    private static final double STICK_SIGN = 1;              // flip to -1 if stick up moves it down
-    // The two servos face opposite ways, so one usually needs REVERSE. Flip these if they fight.
-    private static final DcMotorSimple.Direction DIR_L = DcMotorSimple.Direction.FORWARD;
-    private static final DcMotorSimple.Direction DIR_R = DcMotorSimple.Direction.REVERSE;
+    private static final double BOTTOM_POS = 0.040;       // flower fully down
+    private static final double DEFAULT_TOP_POS = 0.46;   // flower fully up at every init (calibrate)
+    private static final double TOP_STEP = 0.01;          // change per stick-click press
+    private static final double SPEED = 0.8;              // position units/sec when moving between up and down
+    private static final Servo.Direction DIR = Servo.Direction.REVERSE;
 
-    private double stopVoltage;
-    private boolean lastMinus = false, lastPlus = false;
+    private double target = BOTTOM_POS;   // where the servo is being commanded now
+    private boolean goingUp = false;
+    private double topPos;
+    private boolean lastY = false, lastA = false;
+    private boolean lastPlus = false, lastMinus = false;
 
     public void init(HardwareMap hw) {
-        flowerL = hw.get(CRServo.class, "flowerL");
-        flowerR = hw.get(CRServo.class, "flowerR");
-        position = hw.get(AnalogInput.class, "flowerPos");
-        flowerL.setDirection(DIR_L);
-        flowerR.setDirection(DIR_R);
+        flower = hw.get(Servo.class, "flowerL");
+        flower.setDirection(DIR);
 
-        // Resets to the default every time the OpMode is initialized (nothing is saved)
-        stopVoltage = DEFAULT_STOP_VOLTAGE;
+        // Resets every init: flower starts at the bottom, top limit back to the default
+        topPos = DEFAULT_TOP_POS;
+        target = BOTTOM_POS;
+        goingUp = false;
+        flower.setPosition(target);
+        timer.reset();
     }
 
     public void update(Gamepad gamepad, Telemetry telemetry) {
-        // Adjust the stop point: right stick click = raise it, left stick click = lower it
-        if (gamepad.right_stick_button && !lastPlus) stopVoltage += VOLTAGE_STEP;
-        if (gamepad.left_stick_button && !lastMinus) stopVoltage -= VOLTAGE_STEP;
+        double dt = Math.min(timer.seconds(), 0.1);
+        timer.reset();
+
+        // Adjust the top limit: right stick click = raise it, left stick click = lower it
+        if (gamepad.right_stick_button && !lastPlus) topPos += TOP_STEP;
+        if (gamepad.left_stick_button && !lastMinus) topPos -= TOP_STEP;
         lastPlus = gamepad.right_stick_button;
         lastMinus = gamepad.left_stick_button;
-        stopVoltage = Math.max(0.1, Math.min(3.2, stopVoltage));
+        topPos = Math.max(BOTTOM_POS + 0.02, Math.min(1.0, topPos));
 
-        double v = position.getVoltage();
+        // Triangle (Y) = raise to the top, X / cross (A) = lower to the bottom
+        if (gamepad.y && !lastY) goingUp = true;
+        if (gamepad.a && !lastA) goingUp = false;
+        lastY = gamepad.y;
+        lastA = gamepad.a;
 
-        // Right stick up = move up, down = move down
-        double input = -gamepad.right_stick_y;
-        if (Math.abs(input) < DEADZONE) input = 0;
-        double power = input * MAX_POWER * STICK_SIGN;
+        double goal = goingUp ? topPos : BOTTOM_POS;
 
-        // Stop moving up once the analog reading reaches the stop point
-        boolean atLimit = VOLTAGE_RISES_GOING_UP ? v >= stopVoltage : v <= stopVoltage;
-        if (power > 0 && atLimit) power = 0;
+        // Glide toward the goal at SPEED
+        double step = SPEED * dt;
+        if (target < goal) target = Math.min(goal, target + step);
+        else if (target > goal) target = Math.max(goal, target - step);
+        flower.setPosition(target);
 
-        flowerL.setPower(power);
-        flowerR.setPower(power);
-
-        telemetry.addData("Flower voltage", "%.3f V", v);
-        telemetry.addData("Flower stop point", "%.2f V (%.0f deg)", stopVoltage, stopVoltage / 3.3 * 360);
-        telemetry.addData("Flower power", "%.2f", power);
-        telemetry.addData("Flower at limit", atLimit);
+        telemetry.addData("Flower", goingUp ? "UP" : "DOWN");
+        telemetry.addData("Flower target", "%.3f", target);
+        telemetry.addData("Flower top limit", "%.3f", topPos);
     }
 
     public void stop() {
-        flowerL.setPower(0);
-        flowerR.setPower(0);
+        // Servo holds its last position
     }
 }

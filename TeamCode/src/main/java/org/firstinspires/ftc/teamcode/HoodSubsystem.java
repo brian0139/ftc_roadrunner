@@ -11,10 +11,10 @@ public class HoodSubsystem {
     private final ElapsedTime timer = new ElapsedTime();
 
     // Tunables
-    private static final double START_POS = 0.5;   // hood position at init
-    private static final double MIN_POS = 0.1;     // soft limits, set from your real hood stops
-    private static final double MAX_POS = 0.9;
-    private static final double SPEED = 0.4;       // position units/sec at full stick
+    private static final double START_POS = 0.05;   // hood position at init
+    private static final double MIN_POS = 0.05;     // soft limits, set from your real hood stops
+    private static final double MAX_POS = 0.7;
+    private static final double SPEED = 0.8;       // position units/sec at full stick
     private static final double DEADZONE = 0.05;
     private static final double STICK_SIGN = 1;    // flip to -1 if pushing up lowers the hood
     private static final Servo.Direction DIR = Servo.Direction.FORWARD;
